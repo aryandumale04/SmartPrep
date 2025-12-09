@@ -17,6 +17,7 @@ const ProfilePhotoSelector = ({image, setImage, preview, setPreview}) => {
             //generate preview URL from theh file 
             const preview = URL.createObjectURL(file);
 
+            //priview check 
             if(setPreview){
                 setPreview(preview);
             }
