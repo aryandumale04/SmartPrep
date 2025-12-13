@@ -7,7 +7,7 @@ export const validateEmail = (email) =>{
 export const getInitials = (title) => {
     if (!title) {
         return "";
-    }
+    } //to show in session card 
 
     const  words = title.split(" ");
     let initials = "";
