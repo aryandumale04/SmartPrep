@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
 
+
 @theme{
     --font-display: "Urbanist", sans-serif;
     --breakpoint-3xl: 1920px;
@@ -17,6 +18,7 @@
     }
 }
 
+
 /* Custom scrollbar styling  */
 .custom-scrollbar::-webkit-scrollbar {
     width : 4px
@@ -29,6 +31,8 @@
 .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
 }
+
+
 
 @layer utilities {
     /* Animate text with a shine effect */
@@ -77,6 +81,8 @@
 
 }
 
+
+
 .input-box {
     @apply w-full flex justify-between gap-3 text-sm text-black bg-gray-50/50 rounded px-4 py-3 mb-4 mt-3 border border-gray-100 outline-none focus-within:border-orange-300;
 }
@@ -88,6 +94,9 @@
 .btn-small {
     @apply flex items-center justify-center gap-3 bg-linear-to-r from-[#FF9324] to-[#e99a4b] text-sm font-semibold text-white px-7 py-2 rounded-lg hover:bg-black hover:text-white transition-colors cursor-pointer hover:shadow-2xl hover:shadow-orange-300 ;  
 }
+
+
+
 
 input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear,
