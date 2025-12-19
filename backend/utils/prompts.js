@@ -47,5 +47,7 @@ FORMAT:
   "title": "Short title here.",
   "explanation": "Detailed explanation here."
 }
+
 `;
+
 module.exports = { questionAnswerPrompt, conceptExplainPrompt}
