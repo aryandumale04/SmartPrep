@@ -18,7 +18,6 @@ const storage = multer.diskStorage({
         cb(null, true);
     }else{
         cb(new Error('Only .jpeg, .jpg, .png formats are allowed for Profile Image'), false);
-
     }
 
  }; 
