@@ -36,7 +36,7 @@ axiosInstance.interceptors.response.use(
         if( error.response ){
             if( error.response.status === 401 ){
                 //Redirect to login page
-                windows.location.href="/";
+                window.location.href="/";
             }else if( error.response.status === 500 ){
                 console.error("Server Error. Please try again later.");
             }else if ( error.code === "ECONNABORTED" ){

@@ -10,6 +10,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY});
 const generateInterviewQuestions = async(req, res) => {
     try{
         const {role, experience, topicsToFocus, numbersOfQuestions } = req.body;
+        
         if(!role || !experience || !topicsToFocus || !numbersOfQuestions ){
             return res.status(400).json({ message: "Missing required fields"});
 
@@ -20,7 +21,7 @@ const generateInterviewQuestions = async(req, res) => {
             contents: prompt,
         });
 
-        let rawText = response.text;
+        const rawText = response.response.text();
         // Clean it : Remove ```json and ``` from beginning and end
         const cleannedText = rawText
         .replace(/^```json\s*/, "") //remove starting ```json
@@ -56,7 +57,8 @@ const generateConceptExplanation = async(req, res) => {
             contents: prompt,
         });
 
-        let rawText = response.text;
+        const rawText = response.response.text();
+
         // Clean it : Remove ```json and ``` from beginning and end
         const cleannedText = rawText
         .replace(/^```json\s*/, "") //remove starting ```json
