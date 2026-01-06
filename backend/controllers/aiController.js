@@ -13,53 +13,54 @@ const LIMITS = {
   MAX_QUESTIONS: 5,
   MAX_TOPICS: 5,
   ROLE_CHARS: 100,
-  EXPERIENCE_CHARS: 100,
+  EXPERIENCE_CHARS: 50,
   TOPIC_CHARS: 50,
+  DESCRIPTION_CHARS: 300,
   MAX_PROMPT_CHARS: 4000
 };
 
 /*
    AI CALL HELPER WITH RETRY
-   - 1 retry only
-   - retries only on transient failures
 */
 const callAIWithRetry = async (payload, headers) => {
   try {
     return await axios.post(OPENROUTER_URL, payload, { headers });
   } catch (error) {
     const status = error.response?.status;
-
-    // Retry only for transient errors
     if (status >= 500 || status === 429) {
       return await axios.post(OPENROUTER_URL, payload, { headers });
     }
-
     throw error;
   }
 };
 
-//@desc Generate interview questions and answers
 //@route POST /api/ai/generate-questions
-//@access Private
 const generateInterviewQuestions = async (req, res) => {
   try {
-    const { role, experience, topicsToFocus, numbersOfQuestions } = req.body;
+    const {
+      role,
+      experience,
+      topicsToFocus,
+      description,
+      numbersOfQuestions
+    } = req.body;
 
     if (!role || !experience || !topicsToFocus || !numbersOfQuestions) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    /*
-       INPUT SANITIZATION
-    */
     const safeRole = role.slice(0, LIMITS.ROLE_CHARS);
-    const safeExperience = experience.slice(0, LIMITS.EXPERIENCE_CHARS);
+    const safeExperience = experience.toString().slice(0, LIMITS.EXPERIENCE_CHARS);
 
     const safeTopics = Array.isArray(topicsToFocus)
       ? topicsToFocus
           .slice(0, LIMITS.MAX_TOPICS)
           .map(t => t.slice(0, LIMITS.TOPIC_CHARS))
       : [];
+
+    const safeDescription = description
+      ? description.slice(0, LIMITS.DESCRIPTION_CHARS)
+      : "";
 
     const safeQuestionCount = Math.min(
       Number(numbersOfQuestions),
@@ -70,6 +71,7 @@ const generateInterviewQuestions = async (req, res) => {
       safeRole,
       safeExperience,
       safeTopics,
+      safeDescription,
       safeQuestionCount
     );
 
@@ -79,6 +81,7 @@ const generateInterviewQuestions = async (req, res) => {
 
     const payload = {
       model: "openai/gpt-3.5-turbo",
+      temperature: 0.6,
       messages: [{ role: "user", content: prompt }]
     };
 
@@ -90,37 +93,29 @@ const generateInterviewQuestions = async (req, res) => {
     const response = await callAIWithRetry(payload, headers);
 
     const rawText = response.data.choices[0].message.content;
-
-    const cleannedText = rawText
-      .replace(/^```json\s*/, "")
-      .replace(/```$/, "")
+    const cleanedText = rawText
+      .replace(/^```json\s*/i, "")
+      .replace(/```$/i, "")
       .trim();
 
-    const data = JSON.parse(cleannedText);
+    const data = JSON.parse(cleanedText);
     return res.status(200).json(data);
 
   } catch (error) {
-    console.error("AI ERROR FULL:", {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data
-    });
-
+    console.error("AI ERROR:", error.message);
     return res.status(500).json({
-      message: "AI service temporarily unavailable. Please try again.",
+      message: "AI service temporarily unavailable."
     });
   }
 };
 
-//@desc Generate explanation for an interview question
 //@route POST /api/ai/generate-explanation
-//@access Private
 const generateConceptExplanation = async (req, res) => {
   try {
     const { question } = req.body;
 
     if (!question) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return res.status(400).json({ message: "Missing question" });
     }
 
     let prompt = conceptExplainPrompt(question);
@@ -131,6 +126,7 @@ const generateConceptExplanation = async (req, res) => {
 
     const payload = {
       model: "openai/gpt-3.5-turbo",
+      temperature: 0.6,
       messages: [{ role: "user", content: prompt }]
     };
 
@@ -142,18 +138,17 @@ const generateConceptExplanation = async (req, res) => {
     const response = await callAIWithRetry(payload, headers);
 
     const rawText = response.data.choices[0].message.content;
-
-    const cleannedText = rawText
-      .replace(/^```json\s*/, "")
-      .replace(/```$/, "")
+    const cleanedText = rawText
+      .replace(/^```json\s*/i, "")
+      .replace(/```$/i, "")
       .trim();
 
-    const data = JSON.parse(cleannedText);
+    const data = JSON.parse(cleanedText);
     return res.status(200).json(data);
 
   } catch (error) {
     return res.status(500).json({
-      message: "AI service temporarily unavailable. Please try again."
+      message: "AI service temporarily unavailable."
     });
   }
 };

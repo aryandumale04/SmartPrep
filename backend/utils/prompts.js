@@ -2,63 +2,79 @@ const questionAnswerPrompt = (
   role,
   experience,
   topicsToFocus,
+  description,
   numberOfQuestions
 ) => `
-You are an AI system that generates interview questions and answers.
+You are an AI interview preparation system.
+
+CONTEXT:
+- Target Role: ${role}
+- Years of Experience: ${experience}
+- Focus Topics: ${topicsToFocus.join(", ")}
+- Session Description / Goals: ${description || "General interview preparation"}
 
 TASK:
-- Role: ${role}
-- Experience: ${experience}
-- Focus Topics: ${topicsToFocus}
 - Generate EXACTLY ${numberOfQuestions} interview questions.
-- For each question, generate a clear, beginner-friendly answer.
-- Include a small code example ONLY if absolutely necessary.
+- Each question MUST be clearly related to at least one focus topic.
+- Difficulty and depth MUST be appropriate for someone with ${experience} of real-world development experience.
+- Use the session description to decide whether answers should be more code-focused, concept-focused, or interview-oriented.
+- Avoid purely academic or textbook definitions unless they test practical understanding.
+- At most ONE question may be a basic definition.
+- Prefer questions that test usage, reasoning, debugging, or integration of concepts.
 
-STRICT OUTPUT RULES (MANDATORY):
+ANSWERS:
+- Adjust explanation depth dynamically based on the candidate’s experience and the session description.
+- Do NOT artificially simplify or restrict explanations.
+- Include examples or code snippets whenever they help the candidate understand or explain the concept better in an interview.
+- Keep answers focused and relevant, not verbose for the sake of length.
+
+OUTPUT RULES (MANDATORY):
 - Output ONLY a valid JSON array.
-- Do NOT include markdown, backticks, comments, or explanations.
-- Do NOT include any text before or after the JSON.
+- No text before or after the JSON.
 - Use ONLY double quotes for keys and string values.
-- Ensure the JSON is fully parseable by JSON.parse().
-- If the output is not valid JSON, FIX IT before responding.
+- Markdown (including lists or code blocks) is ALLOWED INSIDE string values.
+- The output MUST be fully parseable by JSON.parse().
 
 REQUIRED FORMAT:
 [
   {
-    "question": "Question text here",
-    "answer": "Answer text here"
+    "question": "Question text",
+    "answer": "Answer text"
   }
 ]
 
 FINAL CHECK:
-Before responding, validate that the response is valid JSON and matches the required format exactly.
+Ensure the output is valid JSON and strictly follows the required format.
 `;
 
+
 const conceptExplainPrompt = (question) => `
-You are an AI system that explains technical interview concepts.
+You are an AI system that explains interview concepts.
 
 TASK:
-- Explain the following interview question briefly in 4–6 simple, clear lines.
-- Question: "${question}"
-- Provide a short, clear title summarizing the concept.
-- Include code examples ONLY if they add real clarity.
+- Explain the following interview question clearly and effectively.
+- Adjust explanation depth based on what would help a real interview candidate understand and explain the concept.
+- Focus on practical understanding and real-world usage.
+- Provide a short, clear title summarizing the core concept.
+- Include a code example if it improves clarity or interview readiness.
 
-STRICT OUTPUT RULES (MANDATORY):
+OUTPUT RULES (MANDATORY):
 - Output ONLY a valid JSON object.
-- Do NOT include markdown, backticks, comments, or extra text.
+- No text before or after the JSON.
 - Use ONLY double quotes for keys and string values.
-- Ensure the JSON is fully parseable by JSON.parse().
-- If the output is not valid JSON, FIX IT before responding.
+- Markdown (including code blocks) is ALLOWED INSIDE string values.
+- The output MUST be fully parseable by JSON.parse().
 
 REQUIRED FORMAT:
 {
   "title": "Short clear title",
-  "explanation": "Concise explanation text"
+  "explanation": "Explanation text"
 }
 
 FINAL CHECK:
-Before responding, validate that the response is valid JSON and matches the required format exactly.
+Ensure the output is valid JSON and strictly follows the required format.
 `;
+
 
 module.exports = {
   questionAnswerPrompt,
