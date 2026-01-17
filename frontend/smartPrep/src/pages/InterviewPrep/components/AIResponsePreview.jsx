@@ -11,42 +11,55 @@ import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 const objectToMarkdown = (obj) => {
   if (!obj || typeof obj !== "object") return "";
 
+  // 🔥 Special handling for your AI response format
+  // If it has explanation field, use only that.
+  if (obj.explanation && typeof obj.explanation === "string") {
+    return obj.explanation;
+  }
+
   return Object.entries(obj)
-    .map(([key, value]) => `## ${key}\n\n${value}`)
+    .map(([key, value]) => {
+      if (typeof value === "object") {
+        return `## ${key}\n\n${JSON.stringify(value, null, 2)}`;
+      }
+      return `## ${key}\n\n${String(value)}`;
+    })
     .join("\n\n");
 };
-
-const SECTION_TITLES = [
-  "Core Idea",
-  "How It Works",
-  "Practical Example",
-  "Interview Tip",
-];
 
 const AIResponsePreview = ({ content }) => {
   if (!content) return null;
 
   const normalizedContent = useMemo(() => {
-    if (typeof content !== "string") return "";
-
-    const trimmed = content.trim();
-
-    // Handle JSON-like string safely
-    if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        return objectToMarkdown(parsed);
-      } catch {
-        return content;
-      }
+    // ✅ If already an object
+    if (typeof content === "object") {
+      return objectToMarkdown(content);
     }
 
-    return content;
+    // ✅ If string
+    if (typeof content === "string") {
+      const trimmed = content.trim();
+
+      // If looks like JSON, try to parse
+      if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          return objectToMarkdown(parsed);
+        } catch {
+          // parsing failed → return raw string
+          return content;
+        }
+      }
+
+      return content;
+    }
+
+    return "";
   }, [content]);
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="prose prose-slate dark:prose-invert max-w-none text-[14px]">
+      <div className="prose prose-slate max-w-none text-[14px]">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
@@ -59,27 +72,15 @@ const AIResponsePreview = ({ content }) => {
             },
 
             p({ children }) {
-              return (
-                <p className="mb-3 leading-6 text-gray-800">
-                  {children}
-                </p>
-              );
+              return <p className="mb-3 leading-6 text-gray-800">{children}</p>;
             },
 
             ul({ children }) {
-              return (
-                <ul className="list-disc pl-6 space-y-2 my-3">
-                  {children}
-                </ul>
-              );
+              return <ul className="list-disc pl-6 space-y-2 my-3">{children}</ul>;
             },
 
             ol({ children }) {
-              return (
-                <ol className="list-decimal pl-6 space-y-2 my-3">
-                  {children}
-                </ol>
-              );
+              return <ol className="list-decimal pl-6 space-y-2 my-3">{children}</ol>;
             },
 
             li({ children }) {
