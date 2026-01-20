@@ -5,13 +5,9 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-//  Converts structured explanation object into readable markdown
- 
 const objectToMarkdown = (obj) => {
   if (!obj || typeof obj !== "object") return "";
 
-
-  // If it has explanation field, use only that.
   if (obj.explanation && typeof obj.explanation === "string") {
     return obj.explanation;
   }
@@ -26,27 +22,70 @@ const objectToMarkdown = (obj) => {
     .join("\n\n");
 };
 
+const extractExplanationFromJsonLikeString = (str) => {
+  if (typeof str !== "string") return null;
+
+  const s = str.trim();
+
+  // Try direct JSON parse first
+  if (s.startsWith("{") && s.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(s);
+      if (parsed && typeof parsed.explanation === "string") {
+        return parsed.explanation;
+      }
+    } catch (e) {
+      // ignore parse error and fallback below
+    }
+  }
+
+  // Fallback: extract explanation from JSON-like content even if invalid JSON
+  const match = s.match(/"explanation"\s*:\s*"([\s\S]*?)"\s*(,|\})/i);
+  if (!match) return null;
+
+  let extracted = match[1];
+
+  extracted = extracted
+    .replace(/\\n/g, "\n")
+    .replace(/\\"/g, '"')
+    .replace(/\\t/g, "\t");
+
+  return extracted.trim();
+};
+
 const AIResponsePreview = ({ content }) => {
   if (!content) return null;
 
   const normalizedContent = useMemo(() => {
-    // ✅ If already an object
     if (typeof content === "object") {
       return objectToMarkdown(content);
     }
 
-    // ✅ If string
     if (typeof content === "string") {
       const trimmed = content.trim();
 
-      // If looks like JSON, try to parse
+      // If it contains explanation key, try extracting only the explanation
+      if (trimmed.includes('"explanation"')) {
+        const extracted = extractExplanationFromJsonLikeString(trimmed);
+        if (extracted) return extracted;
+      }
+
+      // If looks like JSON, try to parse normally
       if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
         try {
           const parsed = JSON.parse(trimmed);
           return objectToMarkdown(parsed);
         } catch {
-          // parsing failed → return raw string
-          return content;
+          // ignore
+        }
+      }
+
+      // Defensive cleanup: remove JSON header at start if present
+      if (trimmed.startsWith("{") && trimmed.includes("}\n")) {
+        const idx = trimmed.indexOf("}\n");
+        if (idx !== -1) {
+          const after = trimmed.slice(idx + 2).trim();
+          if (after) return after;
         }
       }
 
@@ -58,15 +97,39 @@ const AIResponsePreview = ({ content }) => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="prose prose-slate max-w-none text-[14px]">
+      <div className="max-w-none text-[14px]">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
+            h1({ children }) {
+              return (
+                <h1 className="text-lg font-bold text-gray-900 mt-2 mb-4">
+                  {children}
+                </h1>
+              );
+            },
+
             h2({ children }) {
               return (
-                <h2 className="mt-6 mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
+                <h2 className="mt-6 mb-2 text-base font-semibold text-gray-900">
                   {children}
                 </h2>
+              );
+            },
+
+            h3({ children }) {
+              return (
+                <h3 className="mt-5 mb-2 text-sm font-semibold text-gray-800">
+                  {children}
+                </h3>
+              );
+            },
+
+            strong({ children }) {
+              return (
+                <strong className="font-semibold text-gray-900">
+                  {children}
+                </strong>
               );
             },
 
@@ -75,15 +138,27 @@ const AIResponsePreview = ({ content }) => {
             },
 
             ul({ children }) {
-              return <ul className="list-disc pl-6 space-y-2 my-3">{children}</ul>;
+              return (
+                <ul className="list-disc pl-6 space-y-2 my-3 text-gray-800">
+                  {children}
+                </ul>
+              );
             },
 
             ol({ children }) {
-              return <ol className="list-decimal pl-6 space-y-2 my-3">{children}</ol>;
+              return (
+                <ol className="list-decimal pl-6 space-y-2 my-3 text-gray-800">
+                  {children}
+                </ol>
+              );
             },
 
             li({ children }) {
-              return <li>{children}</li>;
+              return <li className="text-gray-800">{children}</li>;
+            },
+
+            hr() {
+              return <hr className="my-5 border-gray-200" />;
             },
 
             code({ className, children }) {
@@ -97,7 +172,7 @@ const AIResponsePreview = ({ content }) => {
                   language={language}
                 />
               ) : (
-                <code className="px-1 py-0.5 bg-gray-100 rounded text-sm">
+                <code className="px-1 py-0.5 bg-gray-100 rounded text-[13px] font-medium">
                   {children}
                 </code>
               );

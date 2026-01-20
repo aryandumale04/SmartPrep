@@ -5,6 +5,8 @@ const path = require("path");
 const connectDB = require("../backend/config/db");
 const app = express();
 
+app.set("trust proxy", 1);
+
 const authRoutes = require("./routes/authRoutes");
 const sessionRoutes = require("./routes/sessionRoutes");
 const questionRoutes = require("./routes/questionRoutes");
