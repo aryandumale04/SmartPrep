@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react'
-import { LuPlus } from 'react-icons/lu';
+import React, { useEffect, useState } from "react";
+import { LuPlus } from "react-icons/lu";
 import { CARD_BG } from "../../utils/data";
 import toast from "react-hot-toast";
-import DashboardLayout from '../../components/layouts/DashboardLayout';
+import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from '../../utils/axiosInstance';
-import { API_PATHS } from '../../utils/apiPaths';
-import SummaryCard from '../../components/Cards/SummaryCard';
+import axiosInstance from "../../utils/axiosInstance";
+import { API_PATHS } from "../../utils/apiPaths";
+import SummaryCard from "../../components/Cards/SummaryCard";
 import moment from "moment";
-import Modal from "../../components/Modal"
-import CreateSessionForm from './CreateSessionForm';
+import Modal from "../../components/Modal";
+import CreateSessionForm from "./CreateSessionForm";
 import DeleteAlertContent from "../../components/DeleteAlertContent";
 
 const Dashboard = () => {
@@ -20,7 +20,7 @@ const Dashboard = () => {
 
   const [openDeleteAlert, setOpenDeleteAlert] = useState({
     open: false,
-    data: null
+    data: null,
   });
 
   const fetchAllSessions = async () => {
@@ -51,44 +51,85 @@ const Dashboard = () => {
     fetchAllSessions();
   }, []);
 
+  const hasSessions = Array.isArray(sessions) && sessions.length > 0;
+
   return (
     <DashboardLayout>
-      <div className='container mx-auto pt-4 pb-4'>
-        <div className='grid grid-cols-1 md:grid-cols-3 md:gap-7 pt-1 pb-6 px-4'>
-          {sessions?.map((data, index) => (
-            <SummaryCard
-              key={data?._id}
-              colors={CARD_BG[index % CARD_BG.length]}
-              role={data?.role || ""}
-              topicsToFocus={data?.topicsToFocus || ""}
-              experience={data?.experience || "-"}
-              questions={data?.questions?.length || "-"}
-              description={data?.description || ""}
-              lastUpdated={
-                data?.updatedAt
-                  ? moment(data.updatedAt).format("Do MMM YYYY")
-                  : ""
-              }
-              onSelect={() => { navigate(`/interview-prep/${data?._id}`) }}
-              onDelete={() => {
-                setOpenDeleteAlert({
-                  open: true,
-                  data
-                })
-              }}
-            />
-          ))}
-        </div>
+      <div className="container mx-auto pt-4 pb-4">
+        {hasSessions ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 md:gap-7 pt-1 pb-6 px-4">
+            {sessions?.map((data, index) => (
+              <SummaryCard
+                key={data?._id}
+                colors={CARD_BG[index % CARD_BG.length]}
+                role={data?.role || ""}
+                topicsToFocus={data?.topicsToFocus || ""}
+                experience={data?.experience || "-"}
+                questions={data?.questions?.length || "-"}
+                description={data?.description || ""}
+                lastUpdated={
+                  data?.updatedAt
+                    ? moment(data.updatedAt).format("Do MMM YYYY")
+                    : ""
+                }
+                onSelect={() => {
+                  navigate(`/interview-prep/${data?._id}`);
+                }}
+                onDelete={() => {
+                  setOpenDeleteAlert({
+                    open: true,
+                    data,
+                  });
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="px-4 pt-8 pb-6">
+            <div className="max-w-2xl mx-auto bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm">
+              <h2 className="text-xl font-semibold text-gray-900">
+                No sessions yet
+              </h2>
 
-        <button
-          className='h-12 md:h-12 flex items-center justify-center gap-3 bg-linear-to-r from-[#FF5A3C] to-[#FF8A5B] text-sm font-semibold text-white px-7 py-2.5 rounded-full hover:bg-black hover:text-white transition-colors cursor-pointer hover:shadow-2xl hover:shadow-rose-300 fixed bottom-10 md:bottom-20 right-10 md:right-20'
-          onClick={() => {
-            setOpenCreateModal(true);
-          }}
-        >
-          <LuPlus className='text-2xl text-white' />
-          Add New
-        </button>
+              <p className="text-sm text-gray-600 mt-2 leading-6">
+                Create your first interview preparation session to generate Q&A,
+                pin important questions, take notes, and use “Learn More” for
+                concept explanations.
+              </p>
+
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setOpenCreateModal(true)}
+                  className="h-11 inline-flex items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white bg-linear-to-r from-[#FF5A3C] to-[#FF8A5B] hover:shadow-lg hover:shadow-rose-200 transition"
+                >
+                  <LuPlus className="text-lg" />
+                  Create First Session
+                </button>
+              </div>
+
+              <div className="mt-6 text-xs text-gray-500">
+                Tip: Try entering topics like{" "}
+                <span className="font-semibold text-gray-700">
+                  React, Node.js, MongoDB, DBMS
+                </span>{" "}
+                to get better interview questions.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* show floating button only if sessions exist */}
+        {hasSessions && (
+          <button
+            className="h-12 md:h-12 flex items-center justify-center gap-3 bg-linear-to-r from-[#FF5A3C] to-[#FF8A5B] text-sm font-semibold text-white px-7 py-2.5 rounded-full hover:bg-black hover:text-white transition-colors cursor-pointer hover:shadow-2xl hover:shadow-rose-300 fixed bottom-10 md:bottom-20 right-10 md:right-20"
+            onClick={() => {
+              setOpenCreateModal(true);
+            }}
+          >
+            <LuPlus className="text-2xl text-white" />
+            Add New
+          </button>
+        )}
       </div>
 
       <Modal
@@ -110,18 +151,17 @@ const Dashboard = () => {
         }}
         title="Delete Alert"
       >
-        <div className='w-[30vw]'>
+        <div className="w-[30vw]">
           <DeleteAlertContent
             content="Are you sure you want to delete this session details?"
             onDelete={() => {
-              deleteSession(openDeleteAlert.data)
+              deleteSession(openDeleteAlert.data);
             }}
           />
         </div>
       </Modal>
-
     </DashboardLayout>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;
