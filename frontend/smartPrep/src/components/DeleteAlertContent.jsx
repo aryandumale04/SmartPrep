@@ -16,9 +16,7 @@ const DeleteAlertContent = ({ content, onDelete }) => {
             bg-rose-600 text-white
             hover:bg-rose-700
             transition-colors
-            cursor-pointer
-          "
-        >
+            cursor-pointer">
           Delete
         </button>
       </div>
